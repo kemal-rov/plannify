@@ -35,6 +35,7 @@ src/
   services/        # Firestore and auth integrations
   utils/           # Helper functions
   ```
+  *More to be added.*
 
 ## Requirements
 
