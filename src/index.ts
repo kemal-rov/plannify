@@ -1,4 +1,3 @@
-// src/index.ts
 import * as dotenv from 'dotenv';
 dotenv.config();
 
@@ -10,6 +9,7 @@ import cookieParser from 'cookie-parser';
 
 import pingRoutes from './routes/ping';
 import rsvpRoutes from './routes/rsvp';
+import eventsRoutes from './routes/events';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -22,6 +22,7 @@ app.use(express.json()); // replaces body-parser for JSON
 // Mount routes
 app.use('/api', pingRoutes);
 app.use('/api', rsvpRoutes);
+app.use('/api', eventsRoutes);
 
 // Create server
 const server = http.createServer(app);
