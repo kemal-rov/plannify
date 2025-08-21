@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>RSVP Demo</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f5f7fa;
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      width: 100%;
+      max-width: 600px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+
+    label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: 500;
+      color: #444;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.3rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    button {
+      margin-top: 1rem;
+      width: 100%;
+      padding: 0.75rem;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .rsvp-output {
+      background-color: #f0f0f0;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-top: 1.5rem;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>RSVP to an Event</h1>
+    <form id="rsvpForm">
+      <label>
+        Event ID:
+        <input type="text" name="eventId" required>
+      </label>
+
+      <label>
+        User ID:
+        <input type="text" name="userId" required>
+      </label>
+
+      <label>
+        Display Name:
+        <input type="text" name="displayName" required>
+      </label>
+
+      <label>
+        Email:
+        <input type="email" name="email" required>
+      </label>
+
+      <label>
+        Attending:
+        <select name="attending" required>
+          <option value="true">Yes</option>
+          <option value="false">No</option>
+        </select>
+      </label>
+
+      <label>
+        Plus One:
+        <input type="checkbox" name="plusOne">
+      </label>
+
+      <label>
+        Comment:
+        <textarea name="comment"></textarea>
+      </label>
+
+      <button type="submit">Submit RSVP</button>
+    </form>
+
+    <button id="viewRsvps">🔍 View RSVPs</button>
+
+    <div id="rsvpList" class="rsvp-output"></div>
+  </div>
+
+  <script>
+    const form = document.getElementById('rsvpForm');
+    const responseBox = document.getElementById('rsvpList');
+    const viewBtn = document.getElementById('viewRsvps');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+
+      const data = {
+        userId: formData.get('userId'),
+        displayName: formData.get('displayName'),
+        email: formData.get('email'),
+        comment: formData.get('comment'),
+        plusOne: formData.get('plusOne') === 'on',
+        attending: formData.get('attending') === 'true',
+      };
+
+      const eventId = formData.get('eventId');
+
+      try {
+        const res = await fetch(`http://localhost:3000/api/events/${eventId}/rsvp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const resJson = await res.json();
+        responseBox.textContent = '✅ RSVP Submitted: ' + JSON.stringify(resJson, null, 2);
+      } catch (err) {
+        responseBox.textContent = '❌ Error: ' + err.message;
+      }
+    });
+
+    viewBtn.addEventListener('click', async () => {
+      const eventId = form.eventId.value;
+      if (!eventId) {
+        alert('Please enter an event ID to view RSVPs');
+        return;
+      }
+
+      try {
+        const res = await fetch(`http://localhost:3000/api/events/${eventId}/rsvp`);
+        const rsvps = await res.json();
+
+        if (!Array.isArray(rsvps)) {
+          responseBox.textContent = '⚠️ Unexpected response: ' + JSON.stringify(rsvps);
+          return;
+        }
+
+        if (rsvps.length === 0) {
+          responseBox.textContent = 'No RSVPs found for this event.';
+          return;
+        }
+
+        responseBox.textContent = rsvps
+          .map(r => `👤 ${r.displayName} (${r.email})\n📌 Attending: ${r.attending ? 'Yes' : 'No'}${r.plusOne ? ' +1' : ''}\n💬 ${r.comment || '-'}\n`)
+          .join('\n---\n');
+      } catch (err) {
+        responseBox.textContent = '❌ Error fetching RSVPs: ' + err.message;
+      }
+    });
+  </script>
+</body>
+</html>
